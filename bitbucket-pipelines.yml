@@ -1,0 +1,94 @@
+image: openjdk:12-jdk-alpine
+
+pipelines:
+  branches:
+    develop:
+      - step:
+          name: Building project - DEV
+          script:
+            - chmod +x mvnw
+            - ./mvnw package
+          artifacts:
+            - target/*.jar
+      - step:
+          name: Docker bulding - DEV
+          services:
+            - docker
+          script:
+            - export IMAGE_NAME=mobydigital/talento-dashboard_backend:$BITBUCKET_COMMIT
+            - docker build -t $IMAGE_NAME .
+            - docker login -u $DOCKER_HUB_USERNAME -p $DOCKER_HUB_PASSWORD
+            - docker push $IMAGE_NAME
+      - step:
+          name: Deploying project - DEV
+          image: google/cloud-sdk:alpine
+          deployment: develop
+          script:
+            - export NAMESPACE=talento-dashboard-dev
+            - export CLOUDSDK_CORE_DISABLE_PROMPTS=1
+            - export IMAGE_NAME=mobydigital/talento-dashboard_backend:$BITBUCKET_COMMIT
+            - gcloud components install kubectl
+            - echo $GCLOUD_API_KEYFILE | base64 -d > /tmp/gcloud-api-key.json
+            - gcloud auth activate-service-account --key-file /tmp/gcloud-api-key.json
+            - gcloud container clusters get-credentials talento-noprod-1 --region us-east4 --project pruebarrhh
+            - kubectl set image deployment/talento-backend backend=$IMAGE_NAME -n $NAMESPACE --record=true
+      - step:
+          name: Building project - TEST
+          script:
+            - chmod +x mvnw
+            - ./mvnw package
+          artifacts:
+            - target/*.jar
+      - step:
+          name: Docker bulding - TEST
+          services:
+            - docker
+          script:
+            - export IMAGE_NAME=mobydigital/talento-dashboard_backend:$BITBUCKET_COMMIT
+            - docker build -t $IMAGE_NAME .
+            - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
+            - docker push $IMAGE_NAME
+      - step:
+          name: Deploying project - TEST
+          image: google/cloud-sdk:alpine
+          deployment: test
+          trigger: manual
+          script:
+            - export NAMESPACE=talento-dashboard-dev
+            - export CLOUDSDK_CORE_DISABLE_PROMPTS=1
+            - export IMAGE_NAME=mobydigital/talento-dashboard_backend:$BITBUCKET_COMMIT
+            - gcloud components install kubectl
+            - echo $GCLOUD_API_KEYFILE | base64 -d > /tmp/gcloud-api-key.json
+            - gcloud auth activate-service-account --key-file /tmp/gcloud-api-key.json
+            - gcloud container clusters get-credentials talento-noprod-1 --region us-east4 --project pruebarrhh
+            - kubectl set image deployment/talento-backend backend=$IMAGE_NAME -n $NAMESPACE --record=true
+      - step:
+          name: Building project - UAT
+          script:
+            - chmod +x mvnw
+            - ./mvnw package
+          artifacts:
+            - target/*.jar
+      - step:
+          name: Docker bulding - UAT
+          services:
+            - docker
+          script:
+            - export IMAGE_NAME=mobydigital/talento-dashboard_backend:$BITBUCKET_COMMIT
+            - docker build -t $IMAGE_NAME .
+            - docker login --username $DOCKER_HUB_USERNAME --password $DOCKER_HUB_PASSWORD
+            - docker push $IMAGE_NAME
+      - step:
+          name: Deploying project - UAT
+          image: google/cloud-sdk:alpine
+          deployment: uat
+          trigger: manual
+          script:
+            - export NAMESPACE=talento-dashboard-dev
+            - export CLOUDSDK_CORE_DISABLE_PROMPTS=1
+            - export IMAGE_NAME=mobydigital/talento-dashboard_backend:$BITBUCKET_COMMIT
+            - gcloud components install kubectl
+            - echo $GCLOUD_API_KEYFILE | base64 -d > /tmp/gcloud-api-key.json
+            - gcloud auth activate-service-account --key-file /tmp/gcloud-api-key.json
+            - gcloud container clusters get-credentials talento-noprod-1 --region us-east4 --project pruebarrhh
+            - kubectl set image deployment/talento-backend backend=$IMAGE_NAME -n $NAMESPACE --record=true
