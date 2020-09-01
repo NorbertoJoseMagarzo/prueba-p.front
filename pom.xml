@@ -10,9 +10,9 @@
 		<relativePath /> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>tablero-control-rrhh</artifactId>
+	<artifactId>prueba-proyecto-rrhh</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>tablero-control-rrhh</name>
+	<name>prueba-proyecto-rrhh</name>
 	<description>Proyecto de tablero de control de RRHH.</description>
 
 	<properties>
